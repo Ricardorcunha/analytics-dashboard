@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechStore Analytics | Dashboard Premium</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0A0E27;
+            --bg-secondary: #0F1429;
+            --bg-tertiary: #141829;
+            --border-color: rgba(76, 175, 80, 0.1);
+            --text-primary: #E8F5E9;
+            --text-secondary: #B2DFDB;
+            --text-muted: #80CBC4;
+            --color-green: #1DE9B6;
+            --color-green-dark: #00BFA4;
+            --color-purple: #DA70D6;
+            --color-purple-dark: #BA68C8;
+            --color-blue: #40E0D0;
+            --color-cyan: #64FFDA;
+            --color-orange: #FFD54F;
+            --accent-green: #00E676;
+            --accent-purple: #E040FB;
+            --transition: 300ms ease-out;
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            background: linear-gradient(135deg, #0A0E27 0%, #0D1020 100%);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 14px;
+            overflow-x: hidden;
+        }
+
+        .container { max-width: 1600px; margin: 0 auto; padding: 0 24px; }
+
+        /* HEADER */
+        .header {
+            padding: 40px 0 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .header-left h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #1DE9B6, #DA70D6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .header-controls { 
+            display: flex; 
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .period-btn, .export-btn, .compare-btn {
+            padding: 8px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+
+        .period-btn:hover, .export-btn:hover, .compare-btn:hover { 
+            color: var(--accent-green); 
+            border-color: var(--accent-green);
+            box-shadow: 0 0 8px rgba(29, 233, 182, 0.3);
+        }
+
+        .period-btn.active {
+            background: linear-gradient(135deg, #1DE9B6, #00BFA4);
+            color: #000;
+            border-color: var(--accent-green);
+            box-shadow: 0 0 12px rgba(29, 233, 182, 0.4);
+        }
+
+        .export-btn { color: var(--accent-green); }
+        .export-btn:hover { background: rgba(29, 233, 182, 0.1); }
+
+        .compare-btn { color: var(--accent-purple); }
+        .compare-btn:hover { background: rgba(224, 64, 251, 0.1); }
+
+        /* MODAIS */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #1DE9B6, #DA70D6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--accent-green);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .form-select, .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all var(--transition);
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: var(--accent-green);
+            box-shadow: 0 0 8px rgba(29, 233, 182, 0.2);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 10px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition);
+        }
+
+        .btn-cancel:hover {
+            border-color: var(--text-secondary);
+        }
+
+        .btn-primary {
+            flex: 1;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #1DE9B6, #00BFA4);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 12px rgba(29, 233, 182, 0.4);
+        }
+
+        .filter-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(224, 64, 251, 0.15);
+            border: 1px solid var(--accent-purple);
+            border-radius: 20px;
+            color: var(--color-purple);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .clear-filter-btn {
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid var(--accent-purple);
+            color: var(--accent-purple);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all var(--transition);
+        }
+
+        .clear-filter-btn:hover {
+            background: rgba(224, 64, 251, 0.1);
+            box-shadow: 0 0 8px rgba(224, 64, 251, 0.3);
+        }
+
+        /* COMPARAÇÃO */
+        .comparison-info {
+            background: rgba(29, 233, 182, 0.1);
+            border: 1px solid var(--accent-green);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 16px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* KPI */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin: 40px 0;
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at top right, rgba(29, 233, 182, 0.15), transparent);
+            opacity: 0;
+            transition: opacity var(--transition);
+            pointer-events: none;
+        }
+
+        .kpi-card:hover {
+            border-color: var(--accent-green);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(29, 233, 182, 0.2);
+        }
+
+        .kpi-card:hover::before {
+            opacity: 1;
+        }
+
+        .kpi-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #1DE9B6, #40E0D0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .kpi-change {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .kpi-comparison {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* CHARTS */
+        .charts-container { margin: 60px 0; }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .chart-card {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px;
+            transition: all var(--transition);
+        }
+
+        .chart-card:hover {
+            border-color: var(--accent-green);
+            box-shadow: 0 8px 24px rgba(29, 233, 182, 0.1);
+        }
+
+        .chart-card.full { grid-column: 1 / -1; }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1DE9B6, #DA70D6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .chart-hint {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 500;
+            background: rgba(29, 233, 182, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 320px;
+            margin-bottom: 16px;
+        }
+
+        .chart-card.full .chart-wrapper { height: 280px; }
+
+        .chart-insight {
+            background: rgba(29, 233, 182, 0.08);
+            border-left: 3px solid var(--accent-green);
+            border-radius: 4px;
+            padding: 12px 14px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* DATA SECTIONS */
+        .data-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1DE9B6, #DA70D6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 24px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+        }
+
+        .product-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+            transition: all var(--transition);
+        }
+
+        .product-card:hover {
+            border-color: var(--accent-green);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(29, 233, 182, 0.15);
+        }
+
+        .product-rank {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 12px;
+            margin-bottom: 8px;
+            background: var(--bg-secondary);
+        }
+
+        .product-rank.top-1 { background: linear-gradient(135deg, #FFD54F, #FFA726); color: #000; }
+        .product-rank.top-2 { background: linear-gradient(135deg, #C0C0C0, #808080); color: #fff; }
+        .product-rank.top-3 { background: linear-gradient(135deg, #CD7F32, #8B4513); color: #fff; }
+
+        .product-name { font-weight: 600; margin-bottom: 8px; font-size: 13px; }
+        .product-stats { display: flex; justify-content: space-between; font-size: 11px; }
+        .stat-label { color: var(--text-muted); margin-bottom: 2px; }
+        .stat-value { color: var(--accent-green); font-weight: 600; }
+
+        /* SELLERS */
+        .sellers-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .seller-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: all var(--transition);
+        }
+
+        .seller-item:hover {
+            border-color: var(--accent-green);
+            box-shadow: 0 4px 12px rgba(29, 233, 182, 0.15);
+        }
+
+        .seller-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1DE9B6, #DA70D6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 12px;
+            flex-shrink: 0;
+            box-shadow: 0 0 12px rgba(29, 233, 182, 0.3);
+        }
+
+        .seller-info { flex: 1; min-width: 0; }
+        .seller-name { font-weight: 600; margin-bottom: 2px; font-size: 13px; }
+        .seller-revenue { font-size: 11px; color: var(--text-muted); }
+        .seller-bar {
+            flex: 0 0 80px;
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .seller-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1DE9B6, #40E0D0);
+            box-shadow: 0 0 8px rgba(29, 233, 182, 0.5);
+        }
+
+        .seller-rank {
+            font-weight: 700;
+            color: var(--accent-green);
+            font-size: 12px;
+            width: 28px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        /* TABLE */
+        .table-wrapper { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        thead { border-bottom: 2px solid var(--border-color); }
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr:hover { background: rgba(29, 233, 182, 0.08); }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            background: rgba(29, 233, 182, 0.2);
+            color: var(--accent-green);
+        }
+
+        .badge.down {
+            background: rgba(255, 82, 82, 0.2);
+            color: #FF5252;
+        }
+
+        /* FOOTER */
+        .footer {
+            border-top: 1px solid var(--border-color);
+            padding: 24px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 11px;
+            margin-top: 60px;
+        }
+
+        .fade-in { animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 1200px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 0 16px; }
+            
+            .header-left h1 { font-size: 24px; }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .header-controls {
+                width: 100%;
+                justify-content: space-between;
+                flex-wrap: wrap;
+            }
+
+            .period-btn, .export-btn, .compare-btn {
+                flex: 1;
+                min-width: 80px;
+                padding: 8px 10px;
+                font-size: 11px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .chart-card {
+                padding: 16px;
+            }
+
+            .chart-wrapper {
+                height: 260px;
+            }
+
+            .chart-card.full .chart-wrapper {
+                height: 260px;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .chart-title {
+                font-size: 14px;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .product-card {
+                padding: 10px;
+            }
+
+            .product-name {
+                font-size: 12px;
+            }
+
+            .seller-item {
+                padding: 12px;
+                gap: 10px;
+            }
+
+            .seller-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 11px;
+            }
+
+            .seller-bar {
+                flex: 0 0 60px;
+            }
+
+            .seller-name {
+                font-size: 12px;
+            }
+
+            .seller-revenue {
+                font-size: 10px;
+            }
+
+            table {
+                font-size: 10px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            .data-section {
+                padding: 16px;
+            }
+
+            .section-title {
+                font-size: 16px;
+                margin-bottom: 16px;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+
+            .modal-header {
+                font-size: 16px;
+            }
+
+            .form-select, .form-input {
+                font-size: 13px;
+                padding: 8px 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 0 12px; }
+
+            .header-left h1 { font-size: 20px; }
+
+            .period-btn, .export-btn, .compare-btn {
+                min-width: 70px;
+                padding: 6px 8px;
+                font-size: 10px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-value {
+                font-size: 24px;
+            }
+
+            .kpi-title {
+                font-size: 10px;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .product-card {
+                padding: 8px;
+            }
+
+            .seller-item {
+                flex-wrap: wrap;
+                padding: 10px;
+            }
+
+            .seller-avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 10px;
+            }
+
+            .seller-bar {
+                width: 100%;
+                flex: 1;
+            }
+
+            .seller-rank {
+                flex: 0 0 100%;
+                margin-top: 4px;
+            }
+
+            table {
+                font-size: 9px;
+            }
+
+            th, td {
+                padding: 6px;
+            }
+
+            .chart-wrapper {
+                height: 240px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 16px;
+            }
+
+            .filter-badge {
+                flex-wrap: wrap;
+                width: 100%;
+            }
+        }
+
+        /* PRINT STYLES */
+        @media print {
+            body { background: white; }
+            .header-controls, .chart-hint, footer { display: none; }
+            .container { max-width: 100%; }
+            .data-section, .chart-card { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header fade-in">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>TechStore Analytics</h1>
+                    <div class="header-subtitle" id="periodInfo">Dashboard executivo | Nov 2024 - Abr 2026 | 18 meses</div>
+                </div>
+                <div class="header-controls">
+                    <button class="period-btn active" onclick="filterPeriod('6m', this)">6m</button>
+                    <button class="period-btn" onclick="filterPeriod('12m', this)">12m</button>
+                    <button class="period-btn" onclick="filterPeriod('all', this)">Tudo</button>
+                    <button class="compare-btn" onclick="openCompareModal()">📊 Comparar</button>
+                    <button class="export-btn" onclick="openExportModal()">📥 Baixar</button>
+                    <div id="filterBadge" style="display:none;" class="filter-badge">
+                        <span id="filterName">-</span>
+                        <button class="clear-filter-btn" onclick="clearCategoryFilter()">✕</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL COMPARAÇÃO -->
+        <div id="compareModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    📊 Comparar Períodos
+                    <button class="modal-close" onclick="closeModal('compareModal')">✕</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Período 1</label>
+                    <select class="form-select" id="comparePeriod1" onchange="updateComparison()">
+                        <option value="6m">Últimos 6 meses</option>
+                        <option value="12m">Últimos 12 meses</option>
+                        <option value="all">Todos os períodos</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Período 2</label>
+                    <select class="form-select" id="comparePeriod2" onchange="updateComparison()">
+                        <option value="12m">Últimos 12 meses</option>
+                        <option value="6m">Últimos 6 meses</option>
+                        <option value="all">Todos os períodos</option>
+                    </select>
+                </div>
+                <div class="comparison-info" id="comparisonInfo"></div>
+                <div class="modal-actions">
+                    <button class="btn-cancel" onclick="closeModal('compareModal')">Fechar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL EXPORT -->
+        <div id="exportModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    📥 Baixar Relatório
+                    <button class="modal-close" onclick="closeModal('exportModal')">✕</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Formato</label>
+                    <select class="form-select" id="exportFormat">
+                        <option value="pdf">PDF Completo</option>
+                        <option value="csv">CSV (Dados)</option>
+                        <option value="json">JSON (Dados)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Incluir</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-secondary);">
+                            <input type="checkbox" id="includeCharts" checked> Gráficos
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-secondary);">
+                            <input type="checkbox" id="includeTable" checked> Tabela de dados
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-secondary);">
+                            <input type="checkbox" id="includeProducts" checked> Top produtos
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-secondary);">
+                            <input type="checkbox" id="includeSellers" checked> Top vendedores
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-cancel" onclick="closeModal('exportModal')">Cancelar</button>
+                    <button class="btn-primary" onclick="exportReport()">Baixar Relatório</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid fade-in">
+            <div class="kpi-card">
+                <div class="kpi-title">💰 Receita Total</div>
+                <div class="kpi-value" id="kpi-revenue">R$ 41.5B</div>
+                <div class="kpi-change">↗ +2.1%</div>
+                <div class="kpi-comparison" id="kpi-revenue-comp"></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">📈 Lucro Total</div>
+                <div class="kpi-value" id="kpi-profit">R$ 10.0B</div>
+                <div class="kpi-change">↗ +4.5%</div>
+                <div class="kpi-comparison" id="kpi-profit-comp"></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">📊 Margem Média</div>
+                <div class="kpi-value" id="kpi-margin">24.2%</div>
+                <div class="kpi-change">↗ +1.2%</div>
+                <div class="kpi-comparison" id="kpi-margin-comp"></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">📦 Períodos</div>
+                <div class="kpi-value" id="kpi-periods">6</div>
+                <div class="kpi-change">Meses</div>
+                <div class="kpi-comparison" id="kpi-periods-comp"></div>
+            </div>
+        </div>
+
+        <div class="charts-container fade-in">
+            <div class="chart-grid">
+                <div class="chart-card full">
+                    <div class="chart-header">
+                        <div class="chart-title">📈 Evolução de Receita vs Lucro</div>
+                        <div class="chart-hint">Clique em uma categoria para filtrar</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartEvolution"></canvas>
+                    </div>
+                    <div class="chart-insight">
+                        <strong>Insight:</strong> Receita mantém consistência com variações sazonais. Lucro acompanha proporcionalmente, indicando margem estável em ~24%.
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">📊 Receita por Categoria</div>
+                        <div class="chart-hint">Clique para filtrar</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartCategory"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">🛍️ Receita por Canal</div>
+                        <div class="chart-hint">Site | Marketplace</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartChannel"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-card full">
+                    <div class="chart-header">
+                        <div class="chart-title">🗺️ Receita por Região</div>
+                        <div class="chart-hint">Sudeste | Sul | Nordeste</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartRegion"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">💳 Formas de Pagamento</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartPayment"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">📉 Evolução da Margem</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartMargin"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-section fade-in">
+            <div class="section-title">🏆 Top 10 Produtos</div>
+            <div class="products-grid" id="productsContainer"></div>
+        </div>
+
+        <div class="data-section fade-in">
+            <div class="section-title">👥 Top 5 Vendedores</div>
+            <div class="sellers-list" id="sellersContainer"></div>
+        </div>
+
+        <div class="data-section fade-in">
+            <div class="section-title">📋 Análise Mensal Detalhada</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Período</th>
+                            <th>Receita (R$)</th>
+                            <th>Custo (R$)</th>
+                            <th>Lucro (R$)</th>
+                            <th>Margem (%)</th>
+                            <th>Crescimento (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer fade-in">
+            <p>© 2026 TechStore Brasil | Dashboard Premium | Atualizado em 20 de maio de 2026</p>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+            evolucao: [
+                {periodo: "2024-11", receita: 6652462.45, lucro: 1634283.46},
+                {periodo: "2024-12", receita: 6830858.59, lucro: 1672362.15},
+                {periodo: "2025-01", receita: 7102023.15, lucro: 1713470.23},
+                {periodo: "2025-02", receita: 6867157.04, lucro: 1636376.12},
+                {periodo: "2025-03", receita: 7447528.39, lucro: 1790524.68},
+                {periodo: "2025-04", receita: 7153282.96, lucro: 1701299.81},
+                {periodo: "2025-05", receita: 7165788.90, lucro: 1739630.72},
+                {periodo: "2025-06", receita: 6438089.08, lucro: 1553637.85},
+                {periodo: "2025-07", receita: 7029430.73, lucro: 1719171.83},
+                {periodo: "2025-08", receita: 7257799.28, lucro: 1747327.32},
+                {periodo: "2025-09", receita: 6922774.74, lucro: 1694027.14},
+                {periodo: "2025-10", receita: 7016176.65, lucro: 1717920.27},
+                {periodo: "2025-11", receita: 6904948.44, lucro: 1657744.26},
+                {periodo: "2025-12", receita: 7197247.30, lucro: 1756365.02},
+                {periodo: "2026-01", receita: 7044663.81, lucro: 1726707.71},
+                {periodo: "2026-02", receita: 5981159.20, lucro: 1444465.80},
+                {periodo: "2026-03", receita: 6917152.07, lucro: 1645024.86},
+                {periodo: "2026-04", receita: 6906092.71, lucro: 1662604.99}
+            ],
+            categoria: {Notebooks: 48152623.34, Smartphones: 35826883.16, Monitores: 14643759.20, "Áudio e TV": 11988442.52, Componentes: 11421410.52, Acessórios: 2801516.75},
+            canal: {Site: 44138161.58, Marketplace: 29738625.17, "Loja Física": 22670886.09, App: 14573644.82, WhatsApp: 9071370.40, B2B: 4641947.43},
+            regiao: {Sudeste: 57333429.46, Sul: 22544193.14, Nordeste: 21369555.22, "Centro-Oeste": 13638701.46, Norte: 9948756.21},
+            pagamento: {Boleto: 25449653.32, Transferência: 25365343.22, Pix: 24995874.21, "Cartão de crédito": 24989454.10, "Cartão de débito": 24034310.64},
+            produtos: [
+                {nome: "MacBook Air M2", quantidade: 2523, receita: 18019430.36},
+                {nome: "iPhone 15", quantidade: 2549, receita: 14894581.70},
+                {nome: "Notebook Office 15", quantidade: 2565, receita: 7458020.85},
+                {nome: "Monitor Ultrawide 34", quantidade: 2573, receita: 7174709.70},
+                {nome: "Placa de Vídeo RTX", quantidade: 2516, receita: 8326969.49},
+                {nome: "Moto Edge Neo", quantidade: 2617, receita: 6476752.39},
+                {nome: "Xiaomi Redmi Pro", quantidade: 2535, receita: 4570763.78},
+                {nome: "Monitor 27 4K", quantidade: 2652, receita: 4630181.06},
+                {nome: "Fonte 650W", quantidade: 2576, receita: 1031267.82},
+                {nome: "SSD NVMe 1TB", quantidade: 2639, receita: 1163639.92}
+            ],
+            vendedores: [
+                {nome: "Isabela Nunes", receita: 10916121.27},
+                {nome: "Larissa Gomes", receita: 10858353.32},
+                {nome: "João Pereira", receita: 10749185.96},
+                {nome: "Henrique Dias", receita: 10584650.90},
+                {nome: "Eduarda Rocha", receita: 10505377.15}
+            ]
+        };
+
+        let currentPeriod = '6m';
+        let compareMode = false;
+        let comparePeriod1 = '6m';
+        let comparePeriod2 = '12m';
+        let chartInstances = {};
+        let categoryFilter = null;
+
+        const fmt = {
+            currency: (v) => new Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(v),
+            number: (v) => new Intl.NumberFormat('pt-BR').format(v)
+        };
+
+        function getFilteredData(period) {
+            const evolucao = data.evolucao;
+            if (period === '6m') return evolucao.slice(-6);
+            if (period === '12m') return evolucao.slice(-12);
+            return evolucao;
+        }
+
+        function calculateKPIs(filtered) {
+            const receita = filtered.reduce((sum, d) => sum + d.receita, 0);
+            const lucro = filtered.reduce((sum, d) => sum + d.lucro, 0);
+            return { receita, lucro, margem: (lucro / receita * 100) };
+        }
+
+        function updateKPIs(period) {
+            const filtered = getFilteredData(period);
+            const kpis = calculateKPIs(filtered);
+
+            document.getElementById('kpi-revenue').textContent = fmt.currency(kpis.receita);
+            document.getElementById('kpi-profit').textContent = fmt.currency(kpis.lucro);
+            document.getElementById('kpi-margin').textContent = kpis.margem.toFixed(1) + '%';
+            document.getElementById('kpi-periods').textContent = filtered.length;
+
+            const inicio = filtered[0].periodo;
+            const fim = filtered[filtered.length - 1].periodo;
+            document.getElementById('periodInfo').textContent = `Dashboard executivo | ${inicio} - ${fim} | ${filtered.length} meses`;
+        }
+
+        function destroyCharts() {
+            Object.values(chartInstances).forEach(c => c?.destroy());
+            chartInstances = {};
+        }
+
+        function filterPeriod(period, btn) {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentPeriod = period;
+            compareMode = false;
+            document.querySelectorAll('.kpi-comparison').forEach(el => el.textContent = '');
+            updateKPIs(period);
+            destroyCharts();
+            initCharts();
+        }
+
+        function openCompareModal() {
+            document.getElementById('compareModal').classList.add('active');
+        }
+
+        function openExportModal() {
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function updateComparison() {
+            comparePeriod1 = document.getElementById('comparePeriod1').value;
+            comparePeriod2 = document.getElementById('comparePeriod2').value;
+
+            const filtered1 = getFilteredData(comparePeriod1);
+            const filtered2 = getFilteredData(comparePeriod2);
+            const kpis1 = calculateKPIs(filtered1);
+            const kpis2 = calculateKPIs(filtered2);
+
+            const receitaDiff = kpis1.receita - kpis2.receita;
+            const lucroFiff = kpis1.lucro - kpis2.lucro;
+            const marginDiff = kpis1.margem - kpis2.margem;
+
+            let html = `
+                <strong>Comparação:</strong><br>
+                Receita: ${fmt.currency(receitaDiff)} (${((receitaDiff/kpis2.receita)*100).toFixed(1)}%)<br>
+                Lucro: ${fmt.currency(lucroFiff)} (${((lucroFiff/kpis2.lucro)*100).toFixed(1)}%)<br>
+                Margem: ${marginDiff.toFixed(2)}% (${marginDiff > 0 ? '+' : ''}${marginDiff.toFixed(2)}pp)
+            `;
+            document.getElementById('comparisonInfo').innerHTML = html;
+
+            compareMode = true;
+            compareKPIs(kpis1, kpis2);
+            destroyCharts();
+            initCharts();
+        }
+
+        function compareKPIs(kpis1, kpis2) {
+            const receitaDiff = ((kpis1.receita - kpis2.receita) / kpis2.receita * 100).toFixed(1);
+            const lucroDiff = ((kpis1.lucro - kpis2.lucro) / kpis2.lucro * 100).toFixed(1);
+            const marginDiff = (kpis1.margem - kpis2.margem).toFixed(2);
+
+            document.getElementById('kpi-revenue-comp').textContent = `vs período: ${receitaDiff > 0 ? '+' : ''}${receitaDiff}%`;
+            document.getElementById('kpi-profit-comp').textContent = `vs período: ${lucroDiff > 0 ? '+' : ''}${lucroDiff}%`;
+            document.getElementById('kpi-margin-comp').textContent = `vs período: ${marginDiff > 0 ? '+' : ''}${marginDiff}pp`;
+        }
+
+        function exportReport() {
+            const format = document.getElementById('exportFormat').value;
+            
+            if (format === 'pdf') {
+                exportPDF();
+            } else if (format === 'csv') {
+                exportCSV();
+            } else if (format === 'json') {
+                exportJSON();
+            }
+            
+            closeModal('exportModal');
+        }
+
+        function exportPDF() {
+            const element = document.querySelector('.container');
+            const opt = {
+                margin: 10,
+                filename: 'TechStore_Relatorio_' + new Date().toISOString().split('T')[0] + '.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function exportCSV() {
+            let csv = 'TechStore Brasil - Relatório de Vendas\n';
+            csv += 'Período: ' + document.getElementById('periodInfo').textContent + '\n\n';
+            csv += 'ANÁLISE MENSAL\n';
+            csv += 'Período,Receita,Custo,Lucro,Margem,Crescimento\n';
+            
+            data.evolucao.forEach((mes, i) => {
+                const anterior = i > 0 ? data.evolucao[i - 1] : null;
+                const cresc = anterior ? ((mes.receita - anterior.receita) / anterior.receita * 100) : 0;
+                const custo = mes.receita - mes.lucro;
+                csv += `${mes.periodo},${mes.receita},${custo},${mes.lucro},${(mes.lucro/mes.receita*100).toFixed(2)}%,${cresc.toFixed(2)}%\n`;
+            });
+
+            csv += '\n\nTOP PRODUTOS\n';
+            csv += 'Ranking,Produto,Quantidade,Receita\n';
+            data.produtos.forEach((p, i) => {
+                csv += `${i+1},${p.nome},${p.quantidade},${p.receita}\n`;
+            });
+
+            csv += '\n\nTOP VENDEDORES\n';
+            csv += 'Ranking,Vendedor,Receita\n';
+            data.vendedores.forEach((v, i) => {
+                csv += `${i+1},${v.nome},${v.receita}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'TechStore_Relatorio_' + new Date().toISOString().split('T')[0] + '.csv';
+            link.click();
+        }
+
+        function exportJSON() {
+            const json = JSON.stringify({
+                periodo: document.getElementById('periodInfo').textContent,
+                data: data,
+                exportDate: new Date().toISOString()
+            }, null, 2);
+
+            const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'TechStore_Dados_' + new Date().toISOString().split('T')[0] + '.json';
+            link.click();
+        }
+
+        function applyCategoryFilter(category) {
+            categoryFilter = category;
+            document.getElementById('filterBadge').style.display = 'flex';
+            document.getElementById('filterName').textContent = `📁 ${category}`;
+            destroyCharts();
+            initCharts();
+        }
+
+        function clearCategoryFilter() {
+            categoryFilter = null;
+            document.getElementById('filterBadge').style.display = 'none';
+            destroyCharts();
+            initCharts();
+        }
+
+        const chartOpts = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { 
+                    display: true, 
+                    position: 'bottom', 
+                    labels: {
+                        color: '#80CBC4', 
+                        padding: 16, 
+                        font: {size: 11, weight: '500'},
+                        boxPadding: 8
+                    } 
+                },
+                tooltip: { 
+                    backgroundColor: 'rgba(10, 14, 39, 0.95)', 
+                    borderColor: 'rgba(29, 233, 182, 0.3)', 
+                    borderWidth: 1, 
+                    titleColor: '#E8F5E9', 
+                    bodyColor: '#B2DFDB', 
+                    padding: 12, 
+                    cornerRadius: 6,
+                    titleFont: {weight: 'bold'},
+                    bodyFont: {size: 12}
+                }
+            },
+            scales: {
+                y: { 
+                    grid: {color: 'rgba(29, 233, 182, 0.05)'}, 
+                    ticks: {color: '#80CBC4', font: {size: 11}}
+                },
+                x: { 
+                    grid: {display: false}, 
+                    ticks: {color: '#80CBC4', font: {size: 11}}
+                }
+            }
+        };
+
+        function initCharts() {
+            const filtered = getFilteredData(compareMode ? comparePeriod1 : currentPeriod);
+
+            // Evolution
+            const evoCtx = document.getElementById('chartEvolution').getContext('2d');
+            chartInstances.evo = new Chart(evoCtx, {
+                type: 'line',
+                data: {
+                    labels: filtered.map(d => {
+                        const [year, month] = d.periodo.split('-');
+                        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                        return monthNames[parseInt(month) - 1] + "/" + year.substring(2);
+                    }),
+                    datasets: [
+                        { 
+                            label: 'Receita (R$ Milhões)', 
+                            data: filtered.map(d => d.receita/1e6), 
+                            borderColor: '#1DE9B6', 
+                            backgroundColor: 'rgba(29, 233, 182, 0.08)', 
+                            borderWidth: 3, 
+                            fill: true, 
+                            tension: 0.4, 
+                            pointRadius: 5, 
+                            pointBackgroundColor: '#1DE9B6',
+                            pointBorderColor: '#00BFA4',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 7
+                        },
+                        { 
+                            label: 'Lucro (R$ Milhões)', 
+                            data: filtered.map(d => d.lucro/1e6), 
+                            borderColor: '#DA70D6', 
+                            backgroundColor: 'rgba(218, 112, 214, 0.08)', 
+                            borderWidth: 3, 
+                            fill: true, 
+                            tension: 0.4, 
+                            pointRadius: 5, 
+                            pointBackgroundColor: '#DA70D6',
+                            pointBorderColor: '#BA68C8',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 7
+                        }
+                    ]
+                },
+                options: {
+                    ...chartOpts,
+                    scales: {
+                        ...chartOpts.scales,
+                        y: {
+                            ...chartOpts.scales.y,
+                            ticks: {
+                                ...chartOpts.scales.y.ticks,
+                                callback: (v) => 'R$ ' + v.toFixed(0) + 'M'
+                            }
+                        },
+                        x: {
+                            ...chartOpts.scales.x,
+                            ticks: {
+                                ...chartOpts.scales.x.ticks,
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Category - CLICÁVEL
+            const catCtx = document.getElementById('chartCategory').getContext('2d');
+            chartInstances.cat = new Chart(catCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data.categoria),
+                    datasets: [{ 
+                        data: Object.values(data.categoria), 
+                        backgroundColor: ['#1DE9B6', '#DA70D6', '#40E0D0', '#FFD54F', '#FF7043', '#AB47BC'], 
+                        borderColor: '#0F1429', 
+                        borderWidth: 2,
+                        hoverOffset: 8
+                    }]
+                },
+                options: { 
+                    ...chartOpts,
+                    onClick: (e, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const categoria = activeElements[0].element.$context.label;
+                            applyCategoryFilter(categoria);
+                        }
+                    },
+                    plugins: { 
+                        ...chartOpts.plugins, 
+                        tooltip: { 
+                            ...chartOpts.plugins.tooltip, 
+                            callbacks: { 
+                                label: (ctx) => { 
+                                    const pct = ((ctx.parsed / Object.values(data.categoria).reduce((a,b)=>a+b)) * 100).toFixed(1); 
+                                    return `R$ ${(ctx.parsed/1e6).toFixed(1)}M (${pct}%)`; 
+                                },
+                                afterLabel: () => '👆 Clique para filtrar'
+                            } 
+                        } 
+                    } 
+                }
+            });
+
+            // Channel
+            const chanCtx = document.getElementById('chartChannel').getContext('2d');
+            const sortedChan = Object.entries(data.canal).sort((a,b)=>b[1]-a[1]);
+            
+            chartInstances.chan = new Chart(chanCtx, {
+                type: 'bar',
+                data: { 
+                    labels: sortedChan.map(d => d[0]), 
+                    datasets: [{ 
+                        label: 'Receita por Canal (R$ Milhões)', 
+                        data: sortedChan.map(d => d[1]/1e6), 
+                        backgroundColor: ['#1DE9B6', '#DA70D6', '#40E0D0', '#FFD54F', '#FF7043', '#AB47BC'], 
+                        borderRadius: 6, 
+                        borderSkipped: false,
+                        borderColor: 'rgba(29, 233, 182, 0.3)',
+                        borderWidth: 1
+                    }] 
+                },
+                options: { 
+                    ...chartOpts, 
+                    indexAxis: 'y', 
+                    scales: { 
+                        x: { 
+                            beginAtZero: true, 
+                            grid: {color: 'rgba(29, 233, 182, 0.05)'}, 
+                            ticks: {color: '#80CBC4', font: {size: 11}, callback: (v) => 'R$ ' + v.toFixed(0) + 'M'} 
+                        }, 
+                        y: { 
+                            grid: {display: false}, 
+                            ticks: {color: '#80CBC4', font: {size: 11}} 
+                        } 
+                    },
+                    plugins: {
+                        ...chartOpts.plugins,
+                        tooltip: {
+                            ...chartOpts.plugins.tooltip,
+                            callbacks: {
+                                label: (ctx) => 'R$ ' + ctx.parsed.x.toFixed(1) + 'M'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Region
+            const regCtx = document.getElementById('chartRegion').getContext('2d');
+            const sortedReg = Object.entries(data.regiao).sort((a,b)=>b[1]-a[1]);
+            chartInstances.reg = new Chart(regCtx, {
+                type: 'bar',
+                data: { 
+                    labels: sortedReg.map(d => d[0]), 
+                    datasets: [{ 
+                        label: 'Receita por Região (R$ Milhões)', 
+                        data: sortedReg.map(d => d[1]/1e6), 
+                        backgroundColor: ['#1DE9B6', '#DA70D6', '#40E0D0', '#FFD54F', '#FF7043'], 
+                        borderRadius: 8, 
+                        borderSkipped: false, 
+                        barPercentage: 0.8, 
+                        categoryPercentage: 0.85,
+                        borderColor: 'rgba(29, 233, 182, 0.3)',
+                        borderWidth: 1
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    indexAxis: 'y', 
+                    plugins: { 
+                        legend: { display: true, position: 'bottom', labels: {color: '#80CBC4', padding: 16, font: {size: 11, weight: '500'}} }, 
+                        tooltip: { backgroundColor: 'rgba(10, 14, 39, 0.95)', borderColor: 'rgba(29, 233, 182, 0.3)', borderWidth: 1, titleColor: '#E8F5E9', bodyColor: '#B2DFDB', padding: 12, cornerRadius: 6, callbacks: { label: (ctx) => 'R$ ' + ctx.parsed.x.toFixed(1) + 'M' } } 
+                    }, 
+                    scales: { 
+                        x: { beginAtZero: true, grid: {color: 'rgba(29, 233, 182, 0.05)'}, ticks: {color: '#80CBC4', font: {size: 11}, callback: (v) => 'R$ ' + v.toFixed(0) + 'M'} }, 
+                        y: { grid: {display: false}, ticks: {color: '#80CBC4', font: {size: 11}} } 
+                    } 
+                }
+            });
+
+            // Payment
+            const payCtx = document.getElementById('chartPayment').getContext('2d');
+            chartInstances.pay = new Chart(payCtx, {
+                type: 'doughnut',
+                data: { 
+                    labels: Object.keys(data.pagamento), 
+                    datasets: [{ 
+                        data: Object.values(data.pagamento), 
+                        backgroundColor: ['#1DE9B6', '#DA70D6', '#40E0D0', '#FFD54F', '#FF7043'], 
+                        borderColor: '#0F1429', 
+                        borderWidth: 2,
+                        hoverOffset: 8
+                    }] 
+                },
+                options: { 
+                    ...chartOpts, 
+                    plugins: { 
+                        ...chartOpts.plugins, 
+                        tooltip: { 
+                            ...chartOpts.plugins.tooltip, 
+                            callbacks: { 
+                                label: (ctx) => { 
+                                    const pct = ((ctx.parsed / Object.values(data.pagamento).reduce((a,b)=>a+b)) * 100).toFixed(1); 
+                                    return `R$ ${(ctx.parsed/1e6).toFixed(1)}M (${pct}%)`; 
+                                } 
+                            } 
+                        } 
+                    } 
+                }
+            });
+
+            // Margin
+            const marCtx = document.getElementById('chartMargin').getContext('2d');
+            chartInstances.mar = new Chart(marCtx, {
+                type: 'line',
+                data: { 
+                    labels: filtered.map(d => {
+                        const [year, month] = d.periodo.split('-');
+                        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                        return monthNames[parseInt(month) - 1] + "/" + year.substring(2);
+                    }),
+                    datasets: [{ 
+                        label: 'Margem de Lucro (%)', 
+                        data: filtered.map(d => (d.lucro/d.receita*100)), 
+                        borderColor: '#1DE9B6', 
+                        backgroundColor: 'rgba(29, 233, 182, 0.08)', 
+                        borderWidth: 3, 
+                        fill: true, 
+                        tension: 0.4, 
+                        pointRadius: 5, 
+                        pointBackgroundColor: '#1DE9B6',
+                        pointBorderColor: '#00BFA4',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 7
+                    }] 
+                },
+                options: { 
+                    ...chartOpts, 
+                    plugins: { 
+                        ...chartOpts.plugins, 
+                        legend: {display: false},
+                        tooltip: { 
+                            ...chartOpts.plugins.tooltip, 
+                            callbacks: {label: (ctx) => ctx.parsed.y.toFixed(2) + '%'} 
+                        } 
+                    },
+                    scales: {
+                        ...chartOpts.scales,
+                        y: {
+                            ...chartOpts.scales.y,
+                            ticks: {
+                                ...chartOpts.scales.y.ticks,
+                                callback: (v) => v.toFixed(1) + '%'
+                            }
+                        },
+                        x: {
+                            ...chartOpts.scales.x,
+                            ticks: {
+                                ...chartOpts.scales.x.ticks,
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderProducts() {
+            document.getElementById('productsContainer').innerHTML = data.produtos.map((p, i) => {
+                const rankClass = i < 3 ? `top-${i + 1}` : '';
+                return `<div class="product-card"><div class="product-rank ${rankClass}">${i+1}</div><div class="product-name">${p.nome}</div><div class="product-stats"><div><div class="stat-label">Vendidas</div><div class="stat-value">${fmt.number(p.quantidade)}</div></div><div><div class="stat-label">Receita</div><div class="stat-value">${fmt.currency(p.receita)}</div></div></div></div>`;
+            }).join('');
+        }
+
+        function renderSellers() {
+            const maxRev = Math.max(...data.vendedores.map(v => v.receita));
+            document.getElementById('sellersContainer').innerHTML = data.vendedores.map((v, i) => {
+                const initials = v.nome.split(' ').map(n => n[0]).join('');
+                const pct = (v.receita / maxRev) * 100;
+                return `<div class="seller-item"><div class="seller-avatar">${initials}</div><div class="seller-info"><div class="seller-name">${v.nome}</div><div class="seller-revenue">${fmt.currency(v.receita)}</div></div><div class="seller-bar"><div class="seller-bar-fill" style="width:${pct}%"></div></div><div class="seller-rank">#${i+1}</div></div>`;
+            }).join('');
+        }
+
+        function renderTable() {
+            document.getElementById('tableBody').innerHTML = data.evolucao.map((mes, i) => {
+                const anterior = i > 0 ? data.evolucao[i - 1] : null;
+                const cresc = anterior ? ((mes.receita - anterior.receita) / anterior.receita * 100) : 0;
+                const custo = mes.receita - mes.lucro;
+                const marg = (mes.lucro / mes.receita * 100).toFixed(1);
+                return `<tr><td><strong>${mes.periodo}</strong></td><td>${fmt.currency(mes.receita)}</td><td>${fmt.currency(custo)}</td><td>${fmt.currency(mes.lucro)}</td><td>${marg}%</td><td><span class="badge ${cresc>0?'':'down'}">${cresc>0?'↗':'↘'} ${Math.abs(cresc).toFixed(1)}%</span></td></tr>`;
+            }).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            renderProducts();
+            renderSellers();
+            renderTable();
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target.id === 'compareModal') closeModal('compareModal');
+            if (e.target.id === 'exportModal') closeModal('exportModal');
+        });
+    </script>
+</body>
+</html>
