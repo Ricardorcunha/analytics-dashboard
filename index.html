@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechStore Analytics | Dashboard Premium</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header fade-in">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>TechStore Analytics</h1>
+                    <div class="header-subtitle" id="periodInfo">Dashboard executivo | Nov 2024 - Abr 2026 | 18 meses</div>
+                </div>
+                <div class="header-controls">
+                    <button class="period-btn active" onclick="filterPeriod('6m', this)">6m</button>
+                    <button class="period-btn" onclick="filterPeriod('12m', this)">12m</button>
+                    <button class="period-btn" onclick="filterPeriod('all', this)">Tudo</button>
+                    <button class="compare-btn" onclick="openCompareModal()">📊 Comparar</button>
+                    <button class="export-btn" onclick="openExportModal()">📥 Baixar</button>
+                    <div id="filterBadge" style="display:none;" class="filter-badge">
+                        <span id="filterName">-</span>
+                        <button class="clear-filter-btn" onclick="clearCategoryFilter()">✕</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL COMPARAÇÃO -->
+        <div id="compareModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    📊 Comparar Períodos
+                    <button class="modal-close" onclick="closeModal('compareModal')">✕</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Período 1</label>
+                    <select class="form-select" id="comparePeriod1" onchange="updateComparison()">
+                        <option value="6m">Últimos 6 meses</option>
+                        <option value="12m">Últimos 12 meses</option>
+                        <option value="all">Todos os períodos</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Período 2</label>
+                    <select class="form-select" id="comparePeriod2" onchange="updateComparison()">
+                        <option value="12m">Últimos 12 meses</option>
+                        <option value="6m">Últimos 6 meses</option>
+                        <option value="all">Todos os períodos</option>
+                    </select>
+                </div>
+                <div class="comparison-info" id="comparisonInfo"></div>
+                <div class="modal-actions">
+                    <button class="btn-cancel" onclick="closeModal('compareModal')">Fechar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL EXPORT -->
+        <div id="exportModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    📥 Baixar Relatório
+                    <button class="modal-close" onclick="closeModal('exportModal')">✕</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Formato</label>
+                    <select class="form-select" id="exportFormat">
+                        <option value="pdf">PDF Completo</option>
+                        <option value="csv">CSV (Dados)</option>
+                        <option value="json">JSON (Dados)</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-cancel" onclick="closeModal('exportModal')">Cancelar</button>
+                    <button class="btn-primary" onclick="exportReport()">Baixar Relatório</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid fade-in">
+            <div class="kpi-card">
+                <div class="kpi-title">💰 Receita Total</div>
+                <div class="kpi-value" id="kpi-revenue">R$ 41.5B</div>
+                <div class="kpi-change">↗ +2.1%</div>
+                <div class="kpi-comparison" id="kpi-revenue-comp"></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">📈 Lucro Total</div>
+                <div class="kpi-value" id="kpi-profit">R$ 10.0B</div>
+                <div class="kpi-change">↗ +4.5%</div>
+                <div class="kpi-comparison" id="kpi-profit-comp"></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">📊 Margem Média</div>
+                <div class="kpi-value" id="kpi-margin">24.2%</div>
+                <div class="kpi-change">↗ +1.2%</div>
+                <div class="kpi-comparison" id="kpi-margin-comp"></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">📦 Períodos</div>
+                <div class="kpi-value" id="kpi-periods">6</div>
+                <div class="kpi-change">Meses</div>
+                <div class="kpi-comparison" id="kpi-periods-comp"></div>
+            </div>
+        </div>
+
+        <div class="charts-container fade-in">
+            <div class="chart-grid">
+                <div class="chart-card full">
+                    <div class="chart-header">
+                        <div class="chart-title">📈 Evolução de Receita vs Lucro</div>
+                        <div class="chart-hint">Tendências de receita e lucro</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartEvolution"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">📊 Receita por Categoria</div>
+                        <div class="chart-hint">Clique para filtrar</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartCategory"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">🛍️ Receita por Canal</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartChannel"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-card full">
+                    <div class="chart-header">
+                        <div class="chart-title">🗺️ Receita por Região</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartRegion"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">💳 Formas de Pagamento</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartPayment"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">📉 Evolução da Margem</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartMargin"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-section fade-in">
+            <div class="section-title">🏆 Top 10 Produtos</div>
+            <div class="products-grid" id="productsContainer"></div>
+        </div>
+
+        <div class="data-section fade-in">
+            <div class="section-title">👥 Top 5 Vendedores</div>
+            <div class="sellers-list" id="sellersContainer"></div>
+        </div>
+
+        <div class="data-section fade-in">
+            <div class="section-title">📋 Análise Mensal Detalhada</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Período</th>
+                            <th>Receita (R$)</th>
+                            <th>Custo (R$)</th>
+                            <th>Lucro (R$)</th>
+                            <th>Margem (%)</th>
+                            <th>Crescimento (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer fade-in">
+            <p>© 2026 TechStore Brasil | Dashboard Premium | Atualizado em 20 de maio de 2026</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
