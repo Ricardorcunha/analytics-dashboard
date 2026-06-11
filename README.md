@@ -94,5 +94,5 @@ Funciona em tudo:
 
 - Pasta `docs/` com exemplos de integração com APIs
 - Estrutura `js/` que é fácil estender
-- CSS com variáveis, quer mudar tema é 5 minutos
+- CSS com variáveis
 - Exemplo de como adicionar novos gráficos
