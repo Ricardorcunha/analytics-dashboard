@@ -96,3 +96,11 @@ Funciona em tudo:
 - Estrutura `js/` que é fácil estender
 - CSS com variáveis
 - Exemplo de como adicionar novos gráficos
+
+
+## 👤 Autor
+
+**Ricardo Cunha**
+- 📧 ricardorcunha96@gmail.com
+- 💼 https://www.linkedin.com/in/ricardo-rodrigues-201442378/
+- 🐙 https://github.com/Ricardorcunha
